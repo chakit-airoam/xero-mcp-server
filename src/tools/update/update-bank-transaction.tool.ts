@@ -9,6 +9,12 @@ const lineItemSchema = z.object({
   unitAmount: z.number(),
   accountCode: z.string(),
   taxType: z.string(),
+  tracking: z.array(z.object({
+    trackingCategoryID: z.string().optional(),
+    trackingOptionID: z.string().optional(),
+    name: z.string().optional(),
+    option: z.string().optional(),
+  })).max(2).optional().describe("Optional Xero tracking categories for this line item. Xero allows a maximum of 2 tracking categories per line item."),
 });
 
 const UpdateBankTransactionTool = CreateXeroTool(
