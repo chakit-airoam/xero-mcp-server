@@ -2,9 +2,10 @@ import { xeroClient } from "../clients/xero-client.js";
 import { formatError } from "../helpers/format-error.js";
 import { getClientHeaders } from "../helpers/get-client-headers.js";
 import { XeroClientResponse } from "../types/tool-response.js";
-import { BankTransaction, LineAmountTypes, LineItemTracking } from "xero-node";
+import { BankTransaction, LineAmountTypes, LineItem, LineItemTracking } from "xero-node";
 
 interface BankTransactionLineItem {
+  lineItemID?: string;
   description: string;
   quantity: number;
   unitAmount: number;
@@ -15,6 +16,18 @@ interface BankTransactionLineItem {
 
 type BankTransactionType = "RECEIVE" | "SPEND";
 type BankTransactionLineAmountTypes = "Exclusive" | "Inclusive" | "NoTax";
+
+function editableLineItems(lineItems: Array<BankTransactionLineItem | LineItem> = []): LineItem[] {
+  return lineItems.map((lineItem) => ({
+    lineItemID: lineItem.lineItemID,
+    description: lineItem.description,
+    quantity: lineItem.quantity,
+    unitAmount: lineItem.unitAmount,
+    accountCode: lineItem.accountCode,
+    taxType: lineItem.taxType,
+    tracking: lineItem.tracking,
+  }));
+}
 
 async function getBankTransaction(bankTransactionId: string): Promise<BankTransaction | undefined> {
   await xeroClient.authenticate();
@@ -40,16 +53,17 @@ async function updateBankTransaction(
   date?: string
 ): Promise<BankTransaction | undefined> {
   const bankTransaction: BankTransaction = {
-    ...existingBankTransaction,
     bankTransactionID: bankTransactionId,
     type: type ? BankTransaction.TypeEnum[type] : existingBankTransaction.type,
+    bankAccount: existingBankTransaction.bankAccount,
     contact: contactId ? { contactID: contactId } : existingBankTransaction.contact,
-    lineItems: lineItems ? lineItems : existingBankTransaction.lineItems,
+    lineItems: editableLineItems(lineItems ?? existingBankTransaction.lineItems),
     lineAmountTypes: lineAmountTypes
       ? LineAmountTypes[lineAmountTypes]
       : existingBankTransaction.lineAmountTypes,
     reference: reference ? reference : existingBankTransaction.reference,
-    date: date ? date : existingBankTransaction.date
+    date: date ? date : existingBankTransaction.date,
+    status: existingBankTransaction.status
   };
 
   const response = await xeroClient.accountingApi.updateBankTransaction(

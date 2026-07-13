@@ -4,6 +4,7 @@ import { updateXeroBankTransaction } from "../../handlers/update-xero-bank-trans
 import { bankTransactionDeepLink } from "../../consts/deeplinks.js";
 
 const lineItemSchema = z.object({
+  lineItemID: z.string().optional().describe("Existing Xero line item ID. Preserve this when updating an existing line."),
   description: z.string(),
   quantity: z.number(),
   unitAmount: z.number(),
@@ -29,7 +30,7 @@ const UpdateBankTransactionTool = CreateXeroTool(
     contactId: z.string().optional(),
     lineItems: z.array(lineItemSchema).optional().describe(
       "All line items must be provided. Any line items not provided will be removed. Including existing line items. \
-      Do not modify line items that have not been specified by the user",
+      Do not modify line items that have not been specified by the user. Preserve lineItemID for existing lines when available.",
     ),
     lineAmountTypes: z.enum(["Exclusive", "Inclusive", "NoTax"])
       .optional()
