@@ -1,6 +1,6 @@
 import { xeroClient } from "../clients/xero-client.js";
 import { XeroClientResponse } from "../types/tool-response.js";
-import { BankTransaction, LineItemTracking } from "xero-node";
+import { BankTransaction, LineAmountTypes, LineItemTracking } from "xero-node";
 import { formatError } from "../helpers/format-error.js";
 import { getClientHeaders } from "../helpers/get-client-headers.js";
 
@@ -14,12 +14,14 @@ interface BankTransactionLineItem {
 }
 
 type BankTransactionType = "RECEIVE" | "SPEND";
+type BankTransactionLineAmountTypes = "Exclusive" | "Inclusive" | "NoTax";
 
 async function createBankTransaction(
   type: BankTransactionType,
   bankAccountId: string,
   contactId: string,
   lineItems: BankTransactionLineItem[],
+  lineAmountTypes?: BankTransactionLineAmountTypes,
   reference?: string,
   date?: string
 ): Promise<BankTransaction | undefined> {
@@ -34,6 +36,7 @@ async function createBankTransaction(
       contactID: contactId
     },
     lineItems: lineItems,
+    lineAmountTypes: lineAmountTypes ? LineAmountTypes[lineAmountTypes] : undefined,
     date: date ?? new Date().toISOString().split("T")[0],
     reference: reference,
     status: BankTransaction.StatusEnum.AUTHORISED
@@ -60,11 +63,12 @@ export async function createXeroBankTransaction(
   bankAccountId: string,
   contactId: string,
   lineItems: BankTransactionLineItem[],
+  lineAmountTypes?: BankTransactionLineAmountTypes,
   reference?: string,
   date?: string
 ): Promise<XeroClientResponse<BankTransaction>> {
   try {
-    const createdTransaction = await createBankTransaction(type, bankAccountId, contactId, lineItems, reference, date);
+    const createdTransaction = await createBankTransaction(type, bankAccountId, contactId, lineItems, lineAmountTypes, reference, date);
   
     if (!createdTransaction) {
       throw new Error("Bank transaction creation failed.");

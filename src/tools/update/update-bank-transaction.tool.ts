@@ -31,6 +31,9 @@ const UpdateBankTransactionTool = CreateXeroTool(
       "All line items must be provided. Any line items not provided will be removed. Including existing line items. \
       Do not modify line items that have not been specified by the user",
     ),
+    lineAmountTypes: z.enum(["Exclusive", "Inclusive", "NoTax"])
+      .optional()
+      .describe("Xero LineAmountTypes. Use Inclusive when receipt line amounts include GST/tax, Exclusive when line amounts exclude GST/tax, and NoTax when no tax applies. Preserve the existing value when updating line items."),
     reference: z.string().optional(),
     date: z.string().optional()
   },
@@ -40,11 +43,12 @@ const UpdateBankTransactionTool = CreateXeroTool(
       type,
       contactId,
       lineItems,
+      lineAmountTypes,
       reference,
       date
     }
   ) => {
-    const result = await updateXeroBankTransaction(bankTransactionId, type, contactId, lineItems, reference, date);
+    const result = await updateXeroBankTransaction(bankTransactionId, type, contactId, lineItems, lineAmountTypes, reference, date);
 
     if (result.isError) {
       return {

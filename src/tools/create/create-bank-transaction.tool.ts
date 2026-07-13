@@ -28,13 +28,16 @@ const CreateBankTransactionTool = CreateXeroTool(
     bankAccountId: z.string(),
     contactId: z.string(),
     lineItems: z.array(lineItemSchema),
+    lineAmountTypes: z.enum(["Exclusive", "Inclusive", "NoTax"])
+      .optional()
+      .describe("Xero LineAmountTypes. Use Inclusive when receipt line amounts include GST/tax, Exclusive when line amounts exclude GST/tax, and NoTax when no tax applies."),
     reference: z.string().optional(),
     date: z.string()
       .optional()
       .describe("If no date is provided, the date will default to today's date")
   },
-  async ({ type, bankAccountId, contactId, lineItems, reference, date }) => {
-    const result = await createXeroBankTransaction(type, bankAccountId, contactId, lineItems, reference, date);
+  async ({ type, bankAccountId, contactId, lineItems, lineAmountTypes, reference, date }) => {
+    const result = await createXeroBankTransaction(type, bankAccountId, contactId, lineItems, lineAmountTypes, reference, date);
 
     if (result.isError) {
       return {

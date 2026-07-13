@@ -2,7 +2,7 @@ import { xeroClient } from "../clients/xero-client.js";
 import { formatError } from "../helpers/format-error.js";
 import { getClientHeaders } from "../helpers/get-client-headers.js";
 import { XeroClientResponse } from "../types/tool-response.js";
-import { BankTransaction, LineItemTracking } from "xero-node";
+import { BankTransaction, LineAmountTypes, LineItemTracking } from "xero-node";
 
 interface BankTransactionLineItem {
   description: string;
@@ -14,6 +14,7 @@ interface BankTransactionLineItem {
 }
 
 type BankTransactionType = "RECEIVE" | "SPEND";
+type BankTransactionLineAmountTypes = "Exclusive" | "Inclusive" | "NoTax";
 
 async function getBankTransaction(bankTransactionId: string): Promise<BankTransaction | undefined> {
   await xeroClient.authenticate();
@@ -34,6 +35,7 @@ async function updateBankTransaction(
   type?: BankTransactionType,
   contactId?: string,
   lineItems?: BankTransactionLineItem[],
+  lineAmountTypes?: BankTransactionLineAmountTypes,
   reference?: string,
   date?: string
 ): Promise<BankTransaction | undefined> {
@@ -43,6 +45,9 @@ async function updateBankTransaction(
     type: type ? BankTransaction.TypeEnum[type] : existingBankTransaction.type,
     contact: contactId ? { contactID: contactId } : existingBankTransaction.contact,
     lineItems: lineItems ? lineItems : existingBankTransaction.lineItems,
+    lineAmountTypes: lineAmountTypes
+      ? LineAmountTypes[lineAmountTypes]
+      : existingBankTransaction.lineAmountTypes,
     reference: reference ? reference : existingBankTransaction.reference,
     date: date ? date : existingBankTransaction.date
   };
@@ -64,6 +69,7 @@ export async function updateXeroBankTransaction(
   type?: BankTransactionType,
   contactId?: string,
   lineItems?: BankTransactionLineItem[],
+  lineAmountTypes?: BankTransactionLineAmountTypes,
   reference?: string,
   date?: string
 ): Promise<XeroClientResponse<BankTransaction>> {
@@ -80,6 +86,7 @@ export async function updateXeroBankTransaction(
       type,
       contactId,
       lineItems,
+      lineAmountTypes,
       reference,
       date
     );
