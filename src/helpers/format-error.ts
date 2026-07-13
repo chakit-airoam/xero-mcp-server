@@ -13,6 +13,11 @@ interface XeroSdkError {
       httpStatusCode?: string;
       problem?: XeroSdkProblem;
       Detail?: string;
+      Elements?: Array<{
+        ValidationErrors?: Array<{
+          Message?: string;
+        }>;
+      }>;
     };
   };
 }
@@ -39,6 +44,32 @@ function formatHttpStatus(status: number): string {
   }
 }
 
+function parseJsonStringError(error: string): unknown {
+  try {
+    return JSON.parse(error);
+  } catch {
+    return null;
+  }
+}
+
+function formatXeroSdkError(error: XeroSdkError): string {
+  const status = error.response.statusCode;
+  const mapped = formatHttpStatus(status);
+  if (mapped) return mapped;
+
+  const body = error.response.body;
+  const problem = body?.problem;
+  const title = problem?.title ?? body?.httpStatusCode ?? "HTTP error";
+  const detail = problem?.detail ?? body?.Detail;
+  const validationMessages =
+    body?.Elements?.flatMap((element) =>
+      element.ValidationErrors?.map((validationError) => validationError.Message).filter(Boolean) ?? [],
+    ) ?? [];
+
+  const details = [detail, ...validationMessages].filter(Boolean);
+  return details.length > 0 ? `${status} ${title}: ${details.join("; ")}` : `${status} ${title}`;
+}
+
 /**
  * Format error messages for return to the LLM.
  *
@@ -60,19 +91,18 @@ export function formatError(error: unknown): string {
   }
 
   if (isXeroSdkError(error)) {
-    const status = error.response.statusCode;
-    const mapped = formatHttpStatus(status);
-    if (mapped) return mapped;
-
-    const body = error.response.body;
-    const problem = body?.problem;
-    const title = problem?.title ?? body?.httpStatusCode ?? "HTTP error";
-    const detail = problem?.detail ?? body?.Detail;
-    return detail ? `${status} ${title}: ${detail}` : `${status} ${title}`;
+    return formatXeroSdkError(error);
   }
 
   if (error instanceof Error) {
     return error.message;
+  }
+
+  if (typeof error === "string") {
+    const parsed = parseJsonStringError(error);
+    if (isXeroSdkError(parsed)) {
+      return formatXeroSdkError(parsed);
+    }
   }
 
   return "An unexpected error occurred while communicating with Xero.";

@@ -118,6 +118,37 @@ describe("formatError", () => {
       const sdkError = { response: { statusCode: 502 } };
       expect(formatError(sdkError)).toBe("502 HTTP error");
     });
+
+    it("extracts validation messages from stringified SDK errors without leaking request headers", () => {
+      const sdkError = JSON.stringify({
+        response: {
+          statusCode: 400,
+          body: {
+            httpStatusCode: "BadRequest",
+            Detail: "Validation failed",
+            Elements: [
+              {
+                ValidationErrors: [
+                  { Message: "TaxType is invalid" },
+                  { Message: "Account code is invalid" },
+                ],
+              },
+            ],
+          },
+        },
+        request: {
+          headers: { authorization: "Bearer eyJSECRET" },
+        },
+      });
+
+      const result = formatError(sdkError);
+
+      expect(result).toBe(
+        "400 BadRequest: Validation failed; TaxType is invalid; Account code is invalid",
+      );
+      expect(result).not.toContain("Bearer");
+      expect(result).not.toContain("eyJSECRET");
+    });
   });
 
   describe("plain Error", () => {
@@ -143,7 +174,7 @@ describe("formatError", () => {
       expect(result).not.toContain("LEAKY_TOKEN");
     });
 
-    it("handles string errors safely", () => {
+    it("handles non-JSON string errors safely", () => {
       expect(formatError("something blew up")).toBe(
         "An unexpected error occurred while communicating with Xero.",
       );
