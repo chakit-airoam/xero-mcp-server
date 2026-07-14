@@ -56,9 +56,16 @@ const payTemplateSchema = z.object({
     .array(
       z.object({
         earningsRateID: z.string(),
+        calculationType: z
+          .enum(["USEEARNINGSRATE", "ENTEREARNINGSRATE", "ANNUALSALARY"])
+          .optional(),
         annualSalary: z.number().optional(),
         numberOfUnitsPerWeek: z.number().optional(),
         ratePerUnit: z.number().optional(),
+        normalNumberOfUnits: z.number().optional(),
+        amount: z.number().optional(),
+        numberOfUnits: z.number().optional(),
+        fixedAmount: z.number().optional(),
       }),
     )
     .optional(),
