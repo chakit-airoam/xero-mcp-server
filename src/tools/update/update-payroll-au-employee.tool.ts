@@ -51,6 +51,37 @@ const superMembershipSchema = z.object({
   employeeNumber: z.string().describe("Employee member number at the super fund."),
 });
 
+const leaveLineSchema = z.object({
+  leaveTypeID: z.string().optional().describe("Xero Payroll AU leave type ID."),
+  calculationType: z
+    .enum([
+      "NOCALCULATIONREQUIRED",
+      "FIXEDAMOUNTEACHPERIOD",
+      "ENTERRATEINPAYTEMPLATE",
+      "BASEDONORDINARYEARNINGS",
+    ])
+    .optional(),
+  entitlementFinalPayPayoutType: z.enum(["NOTPAIDOUT", "PAIDOUT"]).optional(),
+  employmentTerminationPaymentType: z.enum(["O", "R"]).optional(),
+  includeSuperannuationGuaranteeContribution: z.boolean().optional(),
+  numberOfUnits: z.number().optional(),
+  annualNumberOfUnits: z.number().optional(),
+  fullTimeNumberOfUnitsPerPeriod: z.number().optional(),
+});
+
+const superLineSchema = z.object({
+  superMembershipID: z.string().optional().describe("Xero Payroll AU super membership ID."),
+  contributionType: z
+    .enum(["SGC", "SALARYSACRIFICE", "EMPLOYERADDITIONAL", "EMPLOYEE"])
+    .optional(),
+  calculationType: z.enum(["FIXEDAMOUNT", "PERCENTAGEOFEARNINGS", "STATUTORY"]).optional(),
+  minimumMonthlyEarnings: z.number().optional(),
+  expenseAccountCode: z.string().optional(),
+  liabilityAccountCode: z.string().optional(),
+  percentage: z.number().optional(),
+  amount: z.number().optional(),
+});
+
 const payTemplateSchema = z.object({
   earningsLines: z
     .array(
@@ -69,24 +100,8 @@ const payTemplateSchema = z.object({
       }),
     )
     .optional(),
-});
-
-const leaveLineSchema = z.object({
-  leaveTypeID: z.string().optional().describe("Xero Payroll AU leave type ID."),
-  calculationType: z
-    .enum([
-      "NOCALCULATIONREQUIRED",
-      "FIXEDAMOUNTEACHPERIOD",
-      "ENTERRATEINPAYTEMPLATE",
-      "BASEDONORDINARYEARNINGS",
-    ])
-    .optional(),
-  entitlementFinalPayPayoutType: z.enum(["NOTPAIDOUT", "PAIDOUT"]).optional(),
-  employmentTerminationPaymentType: z.enum(["O", "R"]).optional(),
-  includeSuperannuationGuaranteeContribution: z.boolean().optional(),
-  numberOfUnits: z.number().optional(),
-  annualNumberOfUnits: z.number().optional(),
-  fullTimeNumberOfUnitsPerPeriod: z.number().optional(),
+  leaveLines: z.array(leaveLineSchema).optional(),
+  superLines: z.array(superLineSchema).optional(),
 });
 
 const UpdatePayrollAuEmployeeTool = CreateXeroTool(

@@ -12,6 +12,7 @@ import ListOrganisationDetailsTool from "./list-organisation-details.tool.js";
 import ListPaymentsTool from "./list-payments.tool.js";
 import ListPayrollAuCalendarsTool from "./list-payroll-au-calendars.tool.js";
 import ListPayrollAuPayItemsTool from "./list-payroll-au-pay-items.tool.js";
+import ListPayrollAuPayRunsTool from "./list-payroll-au-pay-runs.tool.js";
 import ListPayrollAuSuperfundProductsTool
   from "./list-payroll-au-superfund-products.tool.js";
 import ListPayrollAuSuperfundsTool from "./list-payroll-au-superfunds.tool.js";
@@ -49,6 +50,7 @@ export const ListTools = [
   ListBankTransactionsTool,
   ListPayrollAuCalendarsTool,
   ListPayrollAuPayItemsTool,
+  ListPayrollAuPayRunsTool,
   ListPayrollAuSuperfundProductsTool,
   ListPayrollAuSuperfundsTool,
   ListPayrollEmployeesTool,
