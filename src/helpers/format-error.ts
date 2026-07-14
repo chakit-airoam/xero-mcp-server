@@ -22,11 +22,26 @@ interface XeroSdkError {
   };
 }
 
+interface StringifiedAxiosError {
+  response?: {
+    status?: number;
+    statusText?: string;
+    data?: unknown;
+  };
+}
+
 function isXeroSdkError(error: unknown): error is XeroSdkError {
   if (typeof error !== "object" || error === null) return false;
   const response = (error as { response?: unknown }).response;
   if (typeof response !== "object" || response === null) return false;
   return typeof (response as { statusCode?: unknown }).statusCode === "number";
+}
+
+function isStringifiedAxiosError(error: unknown): error is StringifiedAxiosError {
+  if (typeof error !== "object" || error === null) return false;
+  const response = (error as { response?: unknown }).response;
+  if (typeof response !== "object" || response === null) return false;
+  return typeof (response as { status?: unknown }).status === "number";
 }
 
 function formatHttpStatus(status: number): string {
@@ -42,6 +57,42 @@ function formatHttpStatus(status: number): string {
     default:
       return "";
   }
+}
+
+function collectMessages(value: unknown): string[] {
+  if (value === null || value === undefined) return [];
+  if (typeof value === "string") return [value];
+  if (typeof value !== "object") return [];
+
+  const objectValue = value as Record<string, unknown>;
+  const directMessages = [
+    objectValue.Detail,
+    objectValue.detail,
+    objectValue.Message,
+    objectValue.message,
+    objectValue.Error,
+    objectValue.error,
+  ].filter((message): message is string => typeof message === "string");
+
+  const nestedMessages = Object.entries(objectValue)
+    .filter(([key]) => !["request", "config", "headers"].includes(key.toLowerCase()))
+    .flatMap(([, nestedValue]) => collectMessages(nestedValue));
+
+  return [...directMessages, ...nestedMessages];
+}
+
+function formatStringifiedAxiosError(error: StringifiedAxiosError): string {
+  const status = error.response?.status;
+  if (status === undefined) {
+    return "An error occurred while communicating with Xero.";
+  }
+
+  const mapped = formatHttpStatus(status);
+  if (mapped) return mapped;
+
+  const title = error.response?.statusText || "HTTP error";
+  const details = [...new Set(collectMessages(error.response?.data))];
+  return details.length > 0 ? `${status} ${title}: ${details.join("; ")}` : `${status} ${title}`;
 }
 
 function parseJsonStringError(error: string): unknown {
@@ -102,6 +153,9 @@ export function formatError(error: unknown): string {
     const parsed = parseJsonStringError(error);
     if (isXeroSdkError(parsed)) {
       return formatXeroSdkError(parsed);
+    }
+    if (isStringifiedAxiosError(parsed)) {
+      return formatStringifiedAxiosError(parsed);
     }
   }
 

@@ -149,6 +149,36 @@ describe("formatError", () => {
       expect(result).not.toContain("Bearer");
       expect(result).not.toContain("eyJSECRET");
     });
+
+    it("extracts details from stringified Axios-style SDK errors without leaking request headers", () => {
+      const sdkError = JSON.stringify({
+        response: {
+          status: 400,
+          statusText: "Bad Request",
+          data: {
+            Detail: "Validation failed",
+            Errors: [
+              {
+                Message: "Super membership is invalid",
+              },
+            ],
+          },
+          headers: { "set-cookie": "secret-cookie" },
+        },
+        request: {
+          headers: { authorization: "Bearer eyJSECRET" },
+        },
+      });
+
+      const result = formatError(sdkError);
+
+      expect(result).toBe(
+        "400 Bad Request: Validation failed; Super membership is invalid",
+      );
+      expect(result).not.toContain("Bearer");
+      expect(result).not.toContain("eyJSECRET");
+      expect(result).not.toContain("secret-cookie");
+    });
   });
 
   describe("plain Error", () => {

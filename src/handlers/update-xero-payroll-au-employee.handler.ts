@@ -5,16 +5,33 @@ import { formatError } from "../helpers/format-error.js";
 import { getClientHeaders } from "../helpers/get-client-headers.js";
 import { XeroClientResponse } from "../types/tool-response.js";
 
+function stripUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => stripUndefined(item)) as T;
+  }
+
+  if (typeof value !== "object" || value === null) {
+    return value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([, entryValue]) => entryValue !== undefined)
+      .map(([key, entryValue]) => [key, stripUndefined(entryValue)]),
+  ) as T;
+}
+
 async function updatePayrollAuEmployee(
   employeeID: string,
   employee: Employee,
 ): Promise<Employee | null> {
   await xeroClient.authenticate();
+  const employeePayload = stripUndefined(employee);
 
   const response = await xeroClient.payrollAUApi.updateEmployee(
     xeroClient.tenantId,
     employeeID,
-    [employee],
+    [employeePayload],
     undefined,
     getClientHeaders(),
   );
