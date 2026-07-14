@@ -64,6 +64,24 @@ const payTemplateSchema = z.object({
     .optional(),
 });
 
+const leaveLineSchema = z.object({
+  leaveTypeID: z.string().optional().describe("Xero Payroll AU leave type ID."),
+  calculationType: z
+    .enum([
+      "NOCALCULATIONREQUIRED",
+      "FIXEDAMOUNTEACHPERIOD",
+      "ENTERRATEINPAYTEMPLATE",
+      "BASEDONORDINARYEARNINGS",
+    ])
+    .optional(),
+  entitlementFinalPayPayoutType: z.enum(["NOTPAIDOUT", "PAIDOUT"]).optional(),
+  employmentTerminationPaymentType: z.enum(["O", "R"]).optional(),
+  includeSuperannuationGuaranteeContribution: z.boolean().optional(),
+  numberOfUnits: z.number().optional(),
+  annualNumberOfUnits: z.number().optional(),
+  fullTimeNumberOfUnitsPerPeriod: z.number().optional(),
+});
+
 const UpdatePayrollAuEmployeeTool = CreateXeroTool(
   "update-payroll-au-employee",
   `Update an existing employee in Xero Payroll AU.
@@ -82,6 +100,9 @@ Use this for Australian payroll employees only. Send only the fields that need t
     classification: z.string().optional(),
     ordinaryEarningsRateID: z.string().optional(),
     payrollCalendarID: z.string().optional(),
+    status: z.enum(["ACTIVE", "TERMINATED"]).optional(),
+    terminationDate: z.string().optional().describe("Required when setting status to TERMINATED."),
+    terminationReason: z.enum(["V", "I", "D", "R", "F", "C", "T"]).optional(),
     employeeGroupName: z.string().optional(),
     employmentType: z.enum(["EMPLOYEE", "CONTRACTOR"]).optional(),
     incomeType: z
@@ -93,6 +114,7 @@ Use this for Australian payroll employees only. Send only the fields that need t
     taxDeclaration: taxDeclarationSchema.optional(),
     superMemberships: z.array(superMembershipSchema).optional(),
     payTemplate: payTemplateSchema.optional(),
+    leaveLines: z.array(leaveLineSchema).optional(),
   },
   async ({ employeeID, ...employee }) => {
     const response = await updateXeroPayrollAuEmployee(employeeID, employee as Employee);
