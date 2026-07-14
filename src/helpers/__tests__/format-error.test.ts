@@ -179,6 +179,57 @@ describe("formatError", () => {
       expect(result).not.toContain("eyJSECRET");
       expect(result).not.toContain("secret-cookie");
     });
+
+    it("extracts Payroll AU validation messages without leaking submitted bank values", () => {
+      const sdkError = JSON.stringify({
+        response: {
+          statusCode: 400,
+          body: {
+            Message: "A validation exception occurred",
+            Employees: [
+              {
+                BankAccounts: [
+                  {
+                    AccountNumber: "10497566",
+                    BSB: "063-184",
+                  },
+                ],
+                ValidationErrors: [
+                  {
+                    Message: "Bank account details are invalid",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        body: {
+          Message: "A validation exception occurred",
+          Employees: [
+            {
+              ValidationErrors: [
+                {
+                  Message: "Bank account details are invalid",
+                },
+              ],
+            },
+          ],
+        },
+        request: {
+          headers: { authorization: "Bearer eyJSECRET" },
+        },
+      });
+
+      const result = formatError(sdkError);
+
+      expect(result).toBe(
+        "400 HTTP error: A validation exception occurred; Bank account details are invalid",
+      );
+      expect(result).not.toContain("10497566");
+      expect(result).not.toContain("063-184");
+      expect(result).not.toContain("Bearer");
+      expect(result).not.toContain("eyJSECRET");
+    });
   });
 
   describe("plain Error", () => {

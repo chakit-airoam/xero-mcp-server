@@ -13,13 +13,10 @@ interface XeroSdkError {
       httpStatusCode?: string;
       problem?: XeroSdkProblem;
       Detail?: string;
-      Elements?: Array<{
-        ValidationErrors?: Array<{
-          Message?: string;
-        }>;
-      }>;
+      [key: string]: unknown;
     };
   };
+  body?: unknown;
 }
 
 interface StringifiedAxiosError {
@@ -59,26 +56,72 @@ function formatHttpStatus(status: number): string {
   }
 }
 
-function collectMessages(value: unknown): string[] {
+const MESSAGE_KEYS = new Set([
+  "Detail",
+  "detail",
+  "Message",
+  "message",
+  "Error",
+  "error",
+]);
+
+const SKIPPED_KEYS = new Set([
+  "authorization",
+  "config",
+  "headers",
+  "request",
+  "token",
+  "access_token",
+  "refresh_token",
+  "client_secret",
+]);
+
+function isSensitiveKey(key: string): boolean {
+  const normalized = key.toLowerCase();
+  return (
+    SKIPPED_KEYS.has(normalized) ||
+    normalized.includes("token") ||
+    normalized.includes("secret") ||
+    normalized.includes("authorization")
+  );
+}
+
+function collectMessages(value: unknown, parentKey?: string): string[] {
   if (value === null || value === undefined) return [];
-  if (typeof value === "string") return [value];
+
+  if (typeof value === "string") {
+    return parentKey && MESSAGE_KEYS.has(parentKey) ? [value] : [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectMessages(item, parentKey));
+  }
+
   if (typeof value !== "object") return [];
 
   const objectValue = value as Record<string, unknown>;
-  const directMessages = [
-    objectValue.Detail,
-    objectValue.detail,
-    objectValue.Message,
-    objectValue.message,
-    objectValue.Error,
-    objectValue.error,
-  ].filter((message): message is string => typeof message === "string");
+  const directMessages = Object.entries(objectValue)
+    .filter(([key]) => MESSAGE_KEYS.has(key))
+    .flatMap(([key, entryValue]) => collectMessages(entryValue, key));
+
+  const validationMessages = Object.entries(objectValue)
+    .filter(([key]) => key === "ValidationErrors" || key === "Warnings")
+    .flatMap(([, entryValue]) => collectMessages(entryValue));
 
   const nestedMessages = Object.entries(objectValue)
-    .filter(([key]) => !["request", "config", "headers"].includes(key.toLowerCase()))
-    .flatMap(([, nestedValue]) => collectMessages(nestedValue));
+    .filter(([key]) => !MESSAGE_KEYS.has(key))
+    .filter(([key]) => !isSensitiveKey(key))
+    .flatMap(([key, nestedValue]) => collectMessages(nestedValue, key));
 
-  return [...directMessages, ...nestedMessages];
+  return [...directMessages, ...validationMessages, ...nestedMessages];
+}
+
+function dedupeMessages(messages: string[]): string[] {
+  return [...new Set(messages.map((message) => message.trim()).filter(Boolean))];
+}
+
+function collectValidationDetails(...values: unknown[]): string[] {
+  return dedupeMessages(values.flatMap((value) => collectMessages(value)));
 }
 
 function formatStringifiedAxiosError(error: StringifiedAxiosError): string {
@@ -91,7 +134,7 @@ function formatStringifiedAxiosError(error: StringifiedAxiosError): string {
   if (mapped) return mapped;
 
   const title = error.response?.statusText || "HTTP error";
-  const details = [...new Set(collectMessages(error.response?.data))];
+  const details = collectValidationDetails(error.response?.data);
   return details.length > 0 ? `${status} ${title}: ${details.join("; ")}` : `${status} ${title}`;
 }
 
@@ -111,13 +154,7 @@ function formatXeroSdkError(error: XeroSdkError): string {
   const body = error.response.body;
   const problem = body?.problem;
   const title = problem?.title ?? body?.httpStatusCode ?? "HTTP error";
-  const detail = problem?.detail ?? body?.Detail;
-  const validationMessages =
-    body?.Elements?.flatMap((element) =>
-      element.ValidationErrors?.map((validationError) => validationError.Message).filter(Boolean) ?? [],
-    ) ?? [];
-
-  const details = [detail, ...validationMessages].filter(Boolean);
+  const details = collectValidationDetails(problem, body, error.body);
   return details.length > 0 ? `${status} ${title}: ${details.join("; ")}` : `${status} ${title}`;
 }
 
@@ -132,13 +169,15 @@ function formatXeroSdkError(error: XeroSdkError): string {
 export function formatError(error: unknown): string {
   if (error instanceof AxiosError) {
     const status = error.response?.status;
-    const detail = error.response?.data?.Detail;
+    const details = collectValidationDetails(error.response?.data);
 
     if (status !== undefined) {
       const mapped = formatHttpStatus(status);
       if (mapped) return mapped;
     }
-    return detail || "An error occurred while communicating with Xero.";
+    return details.length > 0
+      ? details.join("; ")
+      : "An error occurred while communicating with Xero.";
   }
 
   if (isXeroSdkError(error)) {
