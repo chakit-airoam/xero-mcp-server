@@ -16,6 +16,7 @@ import ListPayrollAuPayRunsTool from "./list-payroll-au-pay-runs.tool.js";
 import ListPayrollAuSuperfundProductsTool
   from "./list-payroll-au-superfund-products.tool.js";
 import ListPayrollAuSuperfundsTool from "./list-payroll-au-superfunds.tool.js";
+import ListPayrollAuTimesheetsTool from "./list-payroll-au-timesheets.tool.js";
 import ListPayrollEmployeeLeaveBalancesTool
   from "./list-payroll-employee-leave-balances.tool.js";
 import ListPayrollEmployeeLeaveTypesTool
@@ -53,6 +54,7 @@ export const ListTools = [
   ListPayrollAuPayRunsTool,
   ListPayrollAuSuperfundProductsTool,
   ListPayrollAuSuperfundsTool,
+  ListPayrollAuTimesheetsTool,
   ListPayrollEmployeesTool,
   ListReportBalanceSheetTool,
   ListOrganisationDetailsTool,

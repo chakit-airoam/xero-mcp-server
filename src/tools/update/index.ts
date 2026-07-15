@@ -7,6 +7,9 @@ import UpdateInvoiceTool from "./update-invoice.tool.js";
 import UpdateItemTool from "./update-item.tool.js";
 import AddTimesheetLineTool from "./update-payroll-timesheet-add-line.tool.js";
 import UpdatePayrollAuEmployeeTool from "./update-payroll-au-employee.tool.js";
+import UpdatePayrollAuPayRunTool from "./update-payroll-au-pay-run.tool.js";
+import UpdatePayrollAuPayslipTool from "./update-payroll-au-payslip.tool.js";
+import UpdatePayrollAuTimesheetTool from "./update-payroll-au-timesheet.tool.js";
 import UpdatePayrollTimesheetLineTool
   from "./update-payroll-timesheet-update-line.tool.js";
 import UpdateManualJournalTool from "./update-manual-journal-tool.js";
@@ -23,6 +26,9 @@ export const UpdateTools = [
   UpdateItemTool,
   UpdateBankTransactionTool,
   UpdatePayrollAuEmployeeTool,
+  UpdatePayrollAuPayRunTool,
+  UpdatePayrollAuPayslipTool,
+  UpdatePayrollAuTimesheetTool,
   ApprovePayrollTimesheetTool,
   AddTimesheetLineTool,
   UpdatePayrollTimesheetLineTool,

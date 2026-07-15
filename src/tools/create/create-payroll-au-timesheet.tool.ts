@@ -12,7 +12,7 @@ Use numberOfUnits as the daily hours array for the timesheet period, e.g. 7 week
     employeeID: z.string().describe("Xero employee ID."),
     startDate: z.string().describe("Timesheet period start date in YYYY-MM-DD format."),
     endDate: z.string().describe("Timesheet period end date in YYYY-MM-DD format."),
-    status: z.enum(["DRAFT", "REQUESTED", "APPROVED"]).optional(),
+    status: z.literal("DRAFT").optional().describe("Defaults to a draft timesheet."),
     timesheetLines: z.array(
       z.object({
         earningsRateID: z.string().describe("Xero earnings rate ID."),
