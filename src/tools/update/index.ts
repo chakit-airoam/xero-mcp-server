@@ -10,6 +10,7 @@ import UpdatePayrollAuEmployeeTool from "./update-payroll-au-employee.tool.js";
 import UpdatePayrollAuPayRunTool from "./update-payroll-au-pay-run.tool.js";
 import UpdatePayrollAuPayslipTool from "./update-payroll-au-payslip.tool.js";
 import UpdatePayrollAuTimesheetTool from "./update-payroll-au-timesheet.tool.js";
+import PostPayrollAuPayRunTool from "./post-payroll-au-pay-run.tool.js";
 import UpdatePayrollTimesheetLineTool
   from "./update-payroll-timesheet-update-line.tool.js";
 import UpdateManualJournalTool from "./update-manual-journal-tool.js";
@@ -29,6 +30,7 @@ export const UpdateTools = [
   UpdatePayrollAuPayRunTool,
   UpdatePayrollAuPayslipTool,
   UpdatePayrollAuTimesheetTool,
+  PostPayrollAuPayRunTool,
   ApprovePayrollTimesheetTool,
   AddTimesheetLineTool,
   UpdatePayrollTimesheetLineTool,
