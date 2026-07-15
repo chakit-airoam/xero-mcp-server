@@ -7,12 +7,14 @@ import { CreateXeroTool } from "../../helpers/create-xero-tool.js";
 const CreatePayrollAuPayRunTool = CreateXeroTool(
   "create-payroll-au-pay-run",
   `Create a draft Xero Payroll AU pay run.
+For a normal scheduled pay run, provide only payrollCalendarID and let Xero select the calendar period and payment date.
+Providing payRunPeriodEndDate creates an unscheduled pay run, which does not automatically create payslips.
 This tool only creates a pay run. It does not post, approve, pay, file, or finalise the pay run.`,
   {
     payrollCalendarID: z.string().describe("Xero payroll calendar ID."),
-    payRunPeriodStartDate: z.string().describe("Pay run period start date in YYYY-MM-DD format."),
-    payRunPeriodEndDate: z.string().describe("Pay run period end date in YYYY-MM-DD format."),
-    paymentDate: z.string().describe("Payment date in YYYY-MM-DD format."),
+    payRunPeriodStartDate: z.string().optional().describe("Optional period start date in YYYY-MM-DD format. Omit for a normal scheduled pay run."),
+    payRunPeriodEndDate: z.string().optional().describe("Optional period end date in YYYY-MM-DD format. Supplying this creates an unscheduled pay run."),
+    paymentDate: z.string().optional().describe("Optional payment date in YYYY-MM-DD format. Omit for a normal scheduled pay run."),
     payslipMessage: z.string().optional().describe("Optional payslip message."),
   },
   async (payRun) => {
